@@ -13,14 +13,12 @@ type room struct {
 	column   int
 	row      int
 	nextRoom []*room
-	prevRoom []*room
 	start    bool
 	end      bool
 	visited  int
 }
 
 var list []*room
-
 
 // to initialise rooms with their own address
 func getRooms() {
@@ -66,7 +64,7 @@ func getRooms() {
 	}
 }
 
-//function to assign the start room for ants.
+// function to assign the start room for ants.
 func assignStart() {
 	data, _ := os.Open("example.txt")
 	var getStart []string
@@ -76,20 +74,20 @@ func assignStart() {
 		getStart = append(getStart, startInfo.Text())
 	}
 
-	for i :=range getStart{
-		if getStart[i]=="##start"{
-			startLine=getStart[i+1]
+	for i := range getStart {
+		if getStart[i] == "##start" {
+			startLine = getStart[i+1]
 		}
 	}
-	a:= strings.Split(startLine," ")
-	for _,ele:=range list{
-		if ele.name==a[0]{
-			ele.start=true
+	a := strings.Split(startLine, " ")
+	for _, ele := range list {
+		if ele.name == a[0] {
+			ele.start = true
 		}
 	}
 }
 
-//function to assign the end room for ants
+// function to assign the end room for ants
 func assignEnd() {
 	data, _ := os.Open("example.txt")
 	var getEnd []string
@@ -100,15 +98,15 @@ func assignEnd() {
 		getEnd = append(getEnd, endInfo.Text())
 	}
 
-	for i :=range getEnd{
-		if getEnd[i]=="##end"{
-			endLine=getEnd[i+1]
+	for i := range getEnd {
+		if getEnd[i] == "##end" {
+			endLine = getEnd[i+1]
 		}
 	}
-	a:= strings.Split(endLine," ")
-	for _,ele:=range list{
-		if ele.name==a[0]{
-			ele.end=true
+	a := strings.Split(endLine, " ")
+	for _, ele := range list {
+		if ele.name == a[0] {
+			ele.end = true
 		}
 	}
 }
@@ -139,13 +137,9 @@ func linkRooms() {
 				for k := range list {
 					for o := range list {
 						if string(links[i][j-1]) == list[k].name && list[o].name == string(links[i][j+1]) {
-							length := len(list[k].nextRoom)
 							list[k].nextRoom = append(list[k].nextRoom, list[o])
-							list[k].nextRoom[length].prevRoom = append(list[k].nextRoom[length].prevRoom, list[k])
 						} else if string(links[i][j+1]) == list[k].name && list[o].name == string(links[i][j-1]) {
-							length := len(list[k].nextRoom)
 							list[k].nextRoom = append(list[k].nextRoom, list[o])
-							list[k].nextRoom[length].prevRoom = append(list[k].nextRoom[length].prevRoom, list[k])
 						}
 					}
 				}
@@ -161,7 +155,64 @@ func linkRooms() {
 }
 
 // find path
+// var (
+// 	roomPaths [][]*room
+// 	count     int
+// )
 
+// func pathRec(r *room) {
+// 	nextRoom := r.nextRoom
+// 	for i := range nextRoom {
+// 		roomPaths[count] = append(roomPaths[count], r)
+// 		for nextRoom[i].end != true && nextRoom[i].visited == 0 {
+// 			if nextRoom[i].end != true {
+// 				roomPaths[count] = append(roomPaths[count], nextRoom[i])
+// 				nextRoom[i].visited = 1
+// 				nextRoom = nextRoom[i].nextRoom
+// 			} else {
+// 				roomPaths[count] = append(roomPaths[count], nextRoom[i])
+// 				count++
+// 				nextRoom = r.nextRoom
+// 			}
+// 		}
+// 	}
+// }
+
+func RouteToEnd() {
+	roomPaths := make([][]*room, 20)
+	count := 0
+	var Start *room
+	for i := range list {
+		if list[i].start == true {
+			Start = list[i]
+		}
+	}
+	nextRoom := Start.nextRoom
+
+	// for j:=range nextRoom[1].nextRoom{
+	// 	fmt.Println(nextRoom[1].nextRoom[j])
+	// }
+ roomPaths[count] = append(roomPaths[count], Start)
+	for i := range nextRoom {
+		Start.visited = 1
+			if nextRoom[i].end  {
+				roomPaths[count] = append(roomPaths[count], nextRoom[i])
+				fmt.Println("end",nextRoom[i])
+				count++
+				nextRoom = Start.nextRoom
+			} else if !nextRoom[i].end && nextRoom[i].visited==0  {
+				roomPaths[count] = append(roomPaths[count], nextRoom[i])
+				//fmt.Println("check", nextRoom[i].name)
+				nextRoom[i].visited = 1
+				nextRoom = nextRoom[i].nextRoom
+			}
+	}
+	
+	for  _,ele := range roomPaths[0] {
+		fmt.Println(ele)
+	}
+	// fmt.Println(roomPaths)
+}
 
 // find shortest route
 
@@ -195,6 +246,7 @@ func main() {
 	assignStart()
 	assignEnd()
 	linkRooms()
+	RouteToEnd()
 }
 
 // find path
