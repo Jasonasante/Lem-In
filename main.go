@@ -13,7 +13,7 @@ type room struct {
 	name     string
 	column   int
 	row      int
-	nextRoom map[string]*room
+	nextRoom []*room
 	start    bool
 	end      bool
 	visited  int
@@ -21,8 +21,9 @@ type room struct {
 
 var (
 	roomList []*room
-	Start     *room
+	Start    *room
 )
+
 // to initialise rooms with their own address
 func getRooms() {
 	data, _ := os.Open("example.txt")
@@ -88,7 +89,7 @@ func assignStart() {
 			ele.start = true
 		}
 	}
-		for i := range roomList {
+	for i := range roomList {
 		if roomList[i].start == true {
 			Start = roomList[i]
 		}
@@ -140,19 +141,19 @@ func linkRooms() {
 		}
 	}
 
-	for _,ele:=range roomList{
-		ele.nextRoom=make(map[string]*room,0)
-	}
-	
+	// for _,ele:=range roomList{
+	// 	ele.nextRoom=make(map[string]*room,0)
+	// }
+
 	for i := range links {
 		for j := range links[i] {
 			if links[i][j] == '-' {
 				for k := range roomList {
 					for o := range roomList {
 						if string(links[i][j-1]) == roomList[k].name && roomList[o].name == string(links[i][j+1]) {
-							roomList[k].nextRoom[roomList[o].name] = roomList[o]
+							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
 						} else if string(links[i][j+1]) == roomList[k].name && roomList[o].name == string(links[i][j-1]) {
-							roomList[k].nextRoom[roomList[o].name] = roomList[o]
+							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
 						}
 					}
 				}
@@ -170,7 +171,6 @@ func linkRooms() {
 // 	count     int
 // )
 
-
 func pathRec(r *room) {
 	// rooms:=r
 	nextRoom := r.nextRoom
@@ -186,17 +186,11 @@ func pathRec(r *room) {
 
 	for i := range nextRoom {
 		if !nextRoom[i].end && nextRoom[i].visited == 0 {
-			for k := range nextRoom[i].nextRoom {
-				if !nextRoom[i].nextRoom[k].end && nextRoom[i].nextRoom[k].visited == 0 {
-					nextRoom[i].visited = 1
-					pathRec(nextRoom[i])
-				}
-			}
 			nextRoom[i].visited = 1
+			pathRec(nextRoom[i])
 		} else if nextRoom[i].end {
 			fmt.Println("end")
 			pathRec(Start)
-
 		}
 	}
 }
@@ -204,11 +198,7 @@ func pathRec(r *room) {
 func RouteToEnd() {
 	// roomPaths := make([][]*room, 20)
 	// count := 0
-	for i := range roomList {
-		if roomList[i].start == true {
-			Start = roomList[i]
-		}
-	}
+
 	Start.visited = 1
 	pathRec(Start)
 
@@ -265,7 +255,6 @@ func grid() {
 		fmt.Println()
 	}
 }
-
 
 func main() {
 	getRooms()
