@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	//"container/list"
+
 )
 
 type room struct {
@@ -16,13 +16,9 @@ type room struct {
 	nextRoom []*room
 	start    bool
 	end      bool
-	visited  int
 }
 
-var (
-	roomList []*room
-	Start    *room
-)
+var roomList []*room
 
 // to initialise rooms with their own address
 func getRooms() {
@@ -68,7 +64,9 @@ func getRooms() {
 	}
 }
 
+
 // function to assign the start room for ants.
+var Start *room
 func assignStart() {
 	data, _ := os.Open("example.txt")
 	var getStart []string
@@ -90,7 +88,7 @@ func assignStart() {
 		}
 	}
 	for i := range roomList {
-		if roomList[i].start == true {
+		if roomList[i].start{
 			Start = roomList[i]
 		}
 	}
@@ -116,6 +114,7 @@ func assignEnd() {
 	for _, ele := range roomList {
 		if ele.name == a[0] {
 			ele.end = true
+			ele.nextRoom = nil
 		}
 	}
 }
@@ -129,7 +128,6 @@ func linkRooms() {
 	// this is to get coords by removing # and -
 	linksInfo := bufio.NewScanner(data)
 	for linksInfo.Scan() {
-		// fmt.Println(scanner.Text())
 		if strings.Contains(linksInfo.Text(), "#") {
 			emptyString = ""
 		} else if strings.Contains(linksInfo.Text(), " ") {
@@ -140,10 +138,6 @@ func linkRooms() {
 			emptyString = ""
 		}
 	}
-
-	// for _,ele:=range roomList{
-	// 	ele.nextRoom=make(map[string]*room,0)
-	// }
 
 	for i := range links {
 		for j := range links[i] {
@@ -166,68 +160,41 @@ func linkRooms() {
 }
 
 // find path
-// var (
-// 	roomPaths [][]*room
-// 	count     int
-// )
 
-func pathRec(r *room) {
-	// rooms:=r
+var (
+	roomPaths []string = make([]string, 10)
+	count     int
+)
+
+func allPaths(r *room) {
+	room := r
 	nextRoom := r.nextRoom
-	// fmt.Println(nextRoom)
-	// fmt.Println("start= ",r.name)
-	fmt.Println()
-	for _, ele := range nextRoom {
-		fmt.Print("  check= ", ele.name)
-		fmt.Print(" visited:= ", ele.visited)
-
-	}
-	fmt.Println()
-
-	for i := range nextRoom {
-		if !nextRoom[i].end && nextRoom[i].visited == 0 {
-			nextRoom[i].visited = 1
-			pathRec(nextRoom[i])
-		} else if nextRoom[i].end {
-			fmt.Println("end")
-			pathRec(Start)
+	fmt.Println(roomPaths)
+	if room.end {
+		roomPaths[count] += room.name
+		count++
+		allPaths(Start)
+	} else {
+		for j, rooms := range nextRoom {
+			if !strings.Contains(roomPaths[count], rooms.name) {
+				roomPaths[count] += room.name + ","
+				room = nextRoom[j]
+				allPaths(room)
+			} else if strings.Contains(roomPaths[count], rooms.name) && len(nextRoom) <= 1 {
+				roomPaths[count] += room.name
+				count++
+				allPaths(Start)
+			} else {
+				roomPaths[count] += room.name + ","
+				room = nextRoom[j+1]
+				allPaths(room)
+			}
 		}
 	}
 }
 
-func RouteToEnd() {
-	// roomPaths := make([][]*room, 20)
-	// count := 0
+//make function to make sure we dont repear path
 
-	Start.visited = 1
-	pathRec(Start)
-
-	// nextRoom := Start.nextRoom
-
-	// // for j:=range nextRoom[1].nextRoom{
-	// // 	fmt.Println(nextRoom[1].nextRoom[j])
-	// // }
-	// roomPaths[count] = append(roomPaths[count], Start)
-	// for i := range nextRoom {
-	// 	Start.visited = 1
-	// 	if nextRoom[i].end {
-	// 		roomPaths[count] = append(roomPaths[count], nextRoom[i])
-	// 		fmt.Println("end", nextRoom[i])
-	// 		count++
-	// 		nextRoom = Start.nextRoom
-	// 	} else if !nextRoom[i].end && nextRoom[i].visited == 0 {
-	// 		roomPaths[count] = append(roomPaths[count], nextRoom[i])
-	// 		// fmt.Println("check", nextRoom[i].name)
-	// 		nextRoom[i].visited = 1
-	// 		nextRoom = nextRoom[i].nextRoom
-	// 	}
-	// }
-
-	// for _, ele := range roomPaths[0] {
-	// 	fmt.Println(ele)
-	// }
-	// fmt.Println(roomPaths)
-}
 
 // find shortest route
 
@@ -261,5 +228,5 @@ func main() {
 	assignStart()
 	assignEnd()
 	linkRooms()
-	RouteToEnd()
+	allPaths(Start)
 }
