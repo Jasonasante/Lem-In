@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
 )
 
 type room struct {
@@ -64,9 +63,9 @@ func getRooms() {
 	}
 }
 
-
 // function to assign the start room for ants.
 var Start *room
+
 func assignStart() {
 	data, _ := os.Open("example.txt")
 	var getStart []string
@@ -88,7 +87,7 @@ func assignStart() {
 		}
 	}
 	for i := range roomList {
-		if roomList[i].start{
+		if roomList[i].start {
 			Start = roomList[i]
 		}
 	}
@@ -162,30 +161,31 @@ func linkRooms() {
 // find path
 
 var (
-	roomPaths []string = make([]string, 10)
+	roomPaths []string = make([]string, 1)
 	count     int
+	potPath   string
 )
 
 func allPaths(r *room) {
 	room := r
 	nextRoom := r.nextRoom
-	fmt.Println(roomPaths)
+	// fmt.Println(roomPaths)
 	if room.end {
-		roomPaths[count] += room.name
-		count++
-		allPaths(Start)
+		potPath += room.name
+		verifyPath(potPath)
+
 	} else {
 		for j, rooms := range nextRoom {
-			if !strings.Contains(roomPaths[count], rooms.name) {
-				roomPaths[count] += room.name + ","
+			if !strings.Contains(potPath, rooms.name) {
+				potPath += room.name + ","
 				room = nextRoom[j]
 				allPaths(room)
-			} else if strings.Contains(roomPaths[count], rooms.name) && len(nextRoom) <= 1 {
-				roomPaths[count] += room.name
-				count++
-				allPaths(Start)
+			} else if !strings.Contains(potPath, rooms.name) && len(nextRoom) == 1 {
+				potPath += room.name
+				potPath += rooms.name
+				verifyPath(potPath)
 			} else {
-				roomPaths[count] += room.name + ","
+				potPath += room.name + ","
 				room = nextRoom[j+1]
 				allPaths(room)
 			}
@@ -193,8 +193,41 @@ func allPaths(r *room) {
 	}
 }
 
-//make function to make sure we dont repear path
+// make function to make sure we dont repear path
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
 
+	return false
+}
+
+func verifyPath(s string) {
+	if contains(roomPaths, s) {
+		for i := len(s) - 1; i == 0; i-- {
+			for _, roomele := range roomList {
+				if string(s[i]) == roomele.name {
+					if roomele.nextRoom != nil {
+						for _, nextroomele := range roomele.nextRoom {
+							if nextroomele.name != string(s[i+1]) {
+								potPath = strings.TrimRight(potPath, string(potPath[i+1]))
+								allPaths(nextroomele)
+							}
+						}
+					}
+				}
+			}
+		}
+	} else {
+		roomPaths[count] = potPath
+		potPath = ""
+		count++
+		allPaths(Start)
+	}
+	fmt.Println(potPath)
+}
 
 // find shortest route
 
