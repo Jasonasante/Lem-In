@@ -63,6 +63,43 @@ func getRooms() {
 	}
 }
 
+// this links the room to their respective next room(s)
+func linkRooms() {
+	data, _ := os.Open("example.txt")
+	// fmt.Println(data)
+	var emptyString string
+	var links []string
+	// this is to get coords by removing # and -
+	linksInfo := bufio.NewScanner(data)
+	for linksInfo.Scan() {
+		if strings.Contains(linksInfo.Text(), "#") {
+			emptyString = ""
+		} else if strings.Contains(linksInfo.Text(), " ") {
+			emptyString = ""
+		} else {
+			emptyString = linksInfo.Text()
+			links = append(links, emptyString)
+			emptyString = ""
+		}
+	}
+
+	for i := range links {
+		for j := range links[i] {
+			if links[i][j] == '-' {
+				for k := range roomList {
+					for o := range roomList {
+						if string(links[i][j-1]) == roomList[k].name && roomList[o].name == string(links[i][j+1]) {
+							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
+						} else if string(links[i][j+1]) == roomList[k].name && roomList[o].name == string(links[i][j-1]) {
+							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // function to assign the start room for ants.
 var Start *room
 
@@ -116,82 +153,92 @@ func assignEnd() {
 			ele.nextRoom = nil
 		}
 	}
-}
-
-// this links the room to their respective next room(s)
-func linkRooms() {
-	data, _ := os.Open("example.txt")
-	// fmt.Println(data)
-	var emptyString string
-	var links []string
-	// this is to get coords by removing # and -
-	linksInfo := bufio.NewScanner(data)
-	for linksInfo.Scan() {
-		if strings.Contains(linksInfo.Text(), "#") {
-			emptyString = ""
-		} else if strings.Contains(linksInfo.Text(), " ") {
-			emptyString = ""
-		} else {
-			emptyString = linksInfo.Text()
-			links = append(links, emptyString)
-			emptyString = ""
-		}
+	for _, ele := range roomList {
+		fmt.Println("roomList of rooms", *ele)
 	}
-
-	for i := range links {
-		for j := range links[i] {
-			if links[i][j] == '-' {
-				for k := range roomList {
-					for o := range roomList {
-						if string(links[i][j-1]) == roomList[k].name && roomList[o].name == string(links[i][j+1]) {
-							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
-						} else if string(links[i][j+1]) == roomList[k].name && roomList[o].name == string(links[i][j-1]) {
-							roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[o])
-						}
-					}
-				}
-			}
-		}
-	}
-	// for _, ele := range roomList {
-	// 	fmt.Println("roomList of rooms", *ele)
-	// }
 }
 
 // find path
 
 var (
-	roomPaths []string = make([]string, 1)
-	count     int
-	potPath   string
+	count       int
+	potPath     string
+	ifRoomFound int
 )
+
+var roomPaths = make([]string, 1000)
 
 func allPaths(r *room) {
 	room := r
 	nextRoom := r.nextRoom
-	// fmt.Println(roomPaths)
+	fmt.Println(roomPaths)
 	if room.end {
 		potPath += room.name
-		verifyPath(potPath)
+		allPaths(verifyPath(potPath))
+	}
+	for _, rooms := range nextRoom {
+		if strings.Contains(potPath, rooms.name) {
+			ifRoomFound++
 
-	} else {
+			// for _, ele := range nextRoom {
+			// 	if strings.Contains(potPath, ele.name) {
+			// 		potPath += room.name + ","
+			// 		room = ele
+			// 		allPaths(room)
+			// 	} else {
+			// 		potPath += room.name
+			// 		room = verifyPath(potPath)
+			// 		allPaths(room)
+			// 	}
+			// }
+			// } else if !strings.Contains(potPath, rooms.name) {
+			// 	potPath += room.name + ","
+			// 	room = nextRoom[j]
+			// 	allPaths(room)
+			// }
+		}
+	}
+	if ifRoomFound<len(nextRoom){
 		for j, rooms := range nextRoom {
 			if !strings.Contains(potPath, rooms.name) {
 				potPath += room.name + ","
-				room = nextRoom[j]
-				allPaths(room)
-			} else if !strings.Contains(potPath, rooms.name) && len(nextRoom) == 1 {
-				potPath += room.name
-				potPath += rooms.name
-				verifyPath(potPath)
+				ifRoomFound=0
+				allPaths(nextRoom[j])
 			} else {
-				potPath += room.name + ","
-				room = nextRoom[j+1]
-				allPaths(room)
+				continue
 			}
 		}
+	} else{
+		potPath+=room.name
+		allPaths(verifyPath(potPath))
 	}
 }
+
+// func allPaths(r *room) {
+// 	room := r
+// 	nextRoom := r.nextRoom
+// 	// fmt.Println(roomPaths)
+// 	if room.end {
+// 		potPath += room.name
+// 		verifyPath(potPath)
+
+// 	} else {
+// 		for j, rooms := range nextRoom {
+// 			if !strings.Contains(potPath, rooms.name) {
+// 				potPath += room.name + ","
+// 				allPaths(nextRoom[j])
+// 			} else if !strings.Contains(potPath, rooms.name) && len(nextRoom) == 1 {
+// 				potPath += room.name
+// 				potPath += rooms.name
+// 				verifyPath(potPath)
+// 			} else {
+// 				potPath += room.name + ","
+				
+// 				allPaths(room)
+// 			}
+// 		}
+// 	}
+// }
 
 // make function to make sure we dont repear path
 func contains(s []string, str string) bool {
@@ -204,29 +251,30 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func verifyPath(s string) {
+func verifyPath(s string) *room {
 	if contains(roomPaths, s) {
-		for i := len(s) - 1; i == 0; i-- {
-			for _, roomele := range roomList {
-				if string(s[i]) == roomele.name {
-					if roomele.nextRoom != nil {
-						for _, nextroomele := range roomele.nextRoom {
-							if nextroomele.name != string(s[i+1]) {
-								potPath = strings.TrimRight(potPath, string(potPath[i+1]))
-								allPaths(nextroomele)
+		for i := (len(s) - 1); i >= 0; i-- {
+			if i%2 == 0 {
+				for _, roomele := range roomList {
+					if string(s[i]) == roomele.name {
+						if len(roomele.nextRoom) != 0 {
+							for _, nextroomele := range roomele.nextRoom {
+								if string(s[i+2]) != nextroomele.name && !strings.Contains(potPath, nextroomele.name) {
+									potPath = strings.TrimRight(s, string(s[i+2]))
+									allPaths(nextroomele)
+								}
 							}
 						}
 					}
 				}
 			}
 		}
-	} else {
-		roomPaths[count] = potPath
-		potPath = ""
-		count++
-		allPaths(Start)
 	}
-	fmt.Println(potPath)
+	roomPaths[count] = s
+	potPath = ""
+	count++
+	ifRoomFound=0
+	return Start
 }
 
 // find shortest route
@@ -258,8 +306,8 @@ func grid() {
 
 func main() {
 	getRooms()
+	linkRooms()
 	assignStart()
 	assignEnd()
-	linkRooms()
 	allPaths(Start)
 }
