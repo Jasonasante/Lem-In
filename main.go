@@ -165,39 +165,13 @@ func assignEnd() {
 }
 
 // find path
-
-var count int // potPath     string
-// ifRoomFound int
-
-var roomPaths []string
-
-// func allPaths(r *room) {
-// 	room := r
-// 	nextRoom := r.nextRoom
-// 	if room.end {
-// 		potPath += room.name
-// 		allPaths(verifyPath(potPath))
-// 	}
-// 	for _, rooms := range nextRoom {
-// 		if strings.Contains(potPath, rooms.name) {
-// 			ifRoomFound++
-// 		}
-// 	}
-// 	if ifRoomFound < len(nextRoom) {
-// 		for j, rooms := range nextRoom {
-// 			if !strings.Contains(potPath, rooms.name) {
-// 				potPath += room.name + ","
-// 				ifRoomFound = 0
-// 				allPaths(nextRoom[j])
-// 			} else {
-// 				continue
-// 			}
-// 		}
-// 	} else {
-// 		potPath += room.name
-// 		allPaths(verifyPath(potPath))
-// 	}
-// }
+var (
+	count int
+	roomPaths []string
+	potPath    string
+	returnPath string
+	visitedNR  int
+)
 
 func allPaths(r *room) {
 	prevRoom := r
@@ -205,8 +179,9 @@ func allPaths(r *room) {
 	fmt.Println(roomPaths)
 	if prevRoom.end {
 		roomPaths[count] += prevRoom.name
-		Start.visited = 0
 		verifyPath(roomPaths[count])
+		Start.visited = 0
+		End.visited = 0
 		count++
 		allPaths(Start)
 	}
@@ -215,133 +190,135 @@ func allPaths(r *room) {
 			if !strings.Contains(roomPaths[count], rooms.name) && (rooms.visited == 0) {
 				roomPaths[count] += prevRoom.name + ","
 				prevRoom.visited = 1
-				// fmt.Print(prevRoom.name + "/")
-				// fmt.Println(prevRoom.visited)
 				allPaths(nextRoom[i])
 			}
 		}
 	}
 }
 
-// make function to make sure we dont repear path
-// func contains(s []string, str string) bool {
-// 	for _, v := range s {
-// 		if v == str {
-// 			return true
-// 		}
-// 	}
-
-// 	return false
-// }
-var (
-	potPath    string
-	returnPath string
-)
-
 func otherPaths(r *room) {
-	returnPath := ""
+	//returnPath := ""
 	prevRoom := r
 	nextRoom := r.nextRoom
 	if prevRoom.end {
 		returnPath += prevRoom.name
+		fmt.Println("new Patth" + returnPath)
 	}
-	for i, rooms := range nextRoom {
-		if !strings.Contains(potPath, rooms.name) && (rooms.visited == 0) {
-			returnPath += prevRoom.name + ","
-			prevRoom.visited = 1
-			otherPaths(nextRoom[i])
+	for _, ele := range nextRoom {
+		if ele.visited == 1 {
+			visitedNR++
+		}
+	}
+	if visitedNR == len(nextRoom) {
+		fmt.Println("check:=")
+		fmt.Println(returnPath)
+		fmt.Println(potPath)
+		fmt.Println("end")
+		returnPath = potPath
+		visitedNR=0
+	} else {
+		for i, rooms := range nextRoom {
+			if !strings.Contains(returnPath, rooms.name) && (rooms.visited == 0) {
+				returnPath += prevRoom.name + ","
+				prevRoom.visited = 1
+				otherPaths(nextRoom[i])
+			}
 		}
 	}
 }
 
 func verifyPath(s string) {
-	// fmt.Println(string(s[0]))
-	// fmt.Println(string(s[(len(s)-1)]))
+	potPath = s
 	var sent *room
-	returnPath = strings.TrimRight(s, string(s[4]))
-	fmt.Println("other part " + returnPath)
-	//fmt.Println("potpath " + potPath)
-	// fmt.Println("s string " +s)
+	for i := 0; i <= 3; i++ {
+		returnPath += string(s[i])
+	}
+	//fmt.Println(s)
+	//fmt.Println("other part " + returnPath)
 	if (string(s[0]) == Start.name) && (string(s[(len(s)-1)]) == End.name) {
-
 		for _, roomele := range roomList {
 			if string(s[4]) == roomele.name {
 				roomele.visited = 1
 			}
 			if string(s[2]) == roomele.name {
 				sent = roomele
+				fmt.Println(*sent)
 			}
 		}
-		for _, ele := range sent.nextRoom {
-			if ele.visited == 0 {
-				sent = ele
-				// fmt.Println("other part " + returnPath)
-				otherPaths(sent)
-				// fmt.Println("potpath " + potPath)
 
+		for index, ele := range sent.nextRoom {
+			if ele.visited == 0 && (index != len(sent.nextRoom)-1) {
+				sent = ele
+				otherPaths(sent)
+				if len(returnPath) >= len(potPath) {
+					for _, roomele := range roomList {
+						if string(returnPath[4]) == roomele.name {
+							roomele.visited = 1
+						}
+					}
+					returnPath = ""
+					for i := 0; i <= 3; i++ {
+						returnPath += string(s[i])
+					}
+				} else {
+					for _, roomele := range roomList {
+						roomele.visited = 0
+					}
+					for i := range returnPath {
+						for _, roomele := range roomList {
+							if string(returnPath[i]) == roomele.name {
+								roomele.visited = 1
+							}
+						}
+					}
+					potPath = returnPath
+					roomPaths[count] = potPath
+					returnPath = ""
+					for i := 0; i <= 3; i++ {
+						returnPath += string(s[i])
+					}
+				}
+			} else if ele.visited == 0 && (index == len(sent.nextRoom)-1) {
+				sent = ele
+				fmt.Print("last index  ")
+				fmt.Println(*sent)
+				otherPaths(sent)
+				if len(returnPath) < len(potPath) {
+					for _, roomele := range roomList {
+						roomele.visited = 0
+					}
+					for i := range returnPath {
+						for _, roomele := range roomList {
+							if string(returnPath[i]) == roomele.name {
+								roomele.visited = 1
+							}
+						}
+					}
+					potPath = returnPath
+					roomPaths[count] = potPath
+					returnPath = ""
+				} else {
+					for _, roomele := range roomList {
+						roomele.visited = 0
+						fmt.Print("last index but return path is greater that:=")
+						fmt.Println(*roomele)
+					}
+					for i := range potPath {
+						for _, roomele := range roomList {
+							if string(potPath[i]) == roomele.name {
+								roomele.visited = 1
+							}
+						}
+					}
+					returnPath = ""
+				}
 			}
+
 		}
 
 	} else {
 		roomPaths[count] = ""
 	}
-
-	// 	if contains(roomPaths, s) {
-	// 		for _, roomele := range roomList {
-	// 			if string(s[0]) == roomele.name {
-	// 				for j, nextroomele := range roomele.nextRoom {
-	// 					if strings.Contains(potPath, nextroomele.name) {
-	// 						potPath = strings.TrimRight(s, nextroomele.name)
-	// 						allPaths(roomele.nextRoom[j+1])
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 		// for i := 0; i >= len(s)-1; i++ {
-	// 		// 	if i%2 == 0 {
-	// 		// 		for _, roomele := range roomList {
-	// 		// 			if string(s[i]) == roomele.name {
-	// 		// 				if roomele.end {
-
-	// 		// 					// for _, nextroomele := range roomele.nextRoom {
-	// 		// 					// 	if string(s[i+2]) != nextroomele.name && !strings.Contains(potPath, nextroomele.name) {
-	// 		// 					// 		potPath = strings.TrimRight(s, string(s[i+2]))
-	// 		// 					// 		allPaths(nextroomele)
-	// 		// 					// 	} else {
-	// 		// 					// 		continue
-	// 		// 					// 	}
-	// 		// 					// }
-	// 		// 				}
-	// 		// 			}
-	// 		// 		}
-	// 		// 	}
-	// 		// }
-	// 	} else if !contains(roomPaths, s) {
-	// 		for _, pathrooms := range roomPaths {
-	// 			for i := range s {
-	// 				if i > 0 && i < len(s)-1 {
-	// 					if strings.Contains(pathrooms, string(s[i+2])) {
-	// 						for _, roomele := range roomList {
-	// 							if string(s[i]) == roomele.name {
-	// 								for _, nextroomele := range roomele.nextRoom {
-	// 									if !strings.Contains(s, nextroomele.name) {
-	// 										potPath = strings.TrimRight(s, string(s[i+2]))
-	// 										allPaths(nextroomele)
-	// 									}
-	// 								}
-	// 							}
-	// 						}
-	// 					} else {
-	// 						roomPaths[count] = s
-	// 						potPath = ""
-	// 						count++
-	// 						ifRoomFound = 0
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// 	return Start
 }
 
 // find shortest route
@@ -377,4 +354,6 @@ func main() {
 	assignStart()
 	assignEnd()
 	allPaths(Start)
+	fmt.Println("RoomPaths:=")
+	fmt.Println(roomPaths)
 }
