@@ -136,9 +136,8 @@ func assignStart() {
 	roomPaths = make([]string, lenStart)
 }
 
-var End *room
-
 // function to assign the end room for ants
+var End *room
 func assignEnd() {
 	data, _ := os.Open("example.txt")
 	var getEnd []string
@@ -164,10 +163,10 @@ func assignEnd() {
 	}
 }
 
-// find path
+// find path from start to end
 var (
-	count int
-	roomPaths []string
+	count      int
+	roomPaths  []string
 	potPath    string
 	returnPath string
 	visitedNR  int
@@ -176,7 +175,7 @@ var (
 func allPaths(r *room) {
 	prevRoom := r
 	nextRoom := r.nextRoom
-	fmt.Println(roomPaths)
+	//fmt.Println(roomPaths)
 	if prevRoom.end {
 		roomPaths[count] += prevRoom.name
 		verifyPath(roomPaths[count])
@@ -196,13 +195,14 @@ func allPaths(r *room) {
 	}
 }
 
+//checks for other paths
 func otherPaths(r *room) {
 	//returnPath := ""
 	prevRoom := r
 	nextRoom := r.nextRoom
 	if prevRoom.end {
 		returnPath += prevRoom.name
-		fmt.Println("new Patth" + returnPath)
+		// fmt.Println("new Patth" + returnPath)
 	}
 	for _, ele := range nextRoom {
 		if ele.visited == 1 {
@@ -210,12 +210,12 @@ func otherPaths(r *room) {
 		}
 	}
 	if visitedNR == len(nextRoom) {
-		fmt.Println("check:=")
-		fmt.Println(returnPath)
-		fmt.Println(potPath)
-		fmt.Println("end")
+		// fmt.Println("check:=")
+		// fmt.Println(returnPath)
+		// fmt.Println(potPath)
+		// fmt.Println("end")
 		returnPath = potPath
-		visitedNR=0
+		visitedNR = 0
 	} else {
 		for i, rooms := range nextRoom {
 			if !strings.Contains(returnPath, rooms.name) && (rooms.visited == 0) {
@@ -227,34 +227,49 @@ func otherPaths(r *room) {
 	}
 }
 
+//verifies if the path we collect is the shortest option
 func verifyPath(s string) {
 	potPath = s
 	var sent *room
+	//so with example1 returnPath may be "1,3," or "1,2,"
 	for i := 0; i <= 3; i++ {
 		returnPath += string(s[i])
 	}
-	//fmt.Println(s)
-	//fmt.Println("other part " + returnPath)
+	//If the incoming string/path starts with the the start room and ends with an end room, 
+	//then check if it is the shortest part available. Else make that roomPath[Count]=="".
 	if (string(s[0]) == Start.name) && (string(s[(len(s)-1)]) == End.name) {
+		//the room at s[4] is the nextroom of start's nextroom. So we make that room visited
+		//and make the sent variable s[2].
 		for _, roomele := range roomList {
 			if string(s[4]) == roomele.name {
 				roomele.visited = 1
 			}
 			if string(s[2]) == roomele.name {
 				sent = roomele
-				fmt.Println(*sent)
+				//fmt.Println(*sent)
 			}
 		}
-
+//Going through sent's nextroom, check if that room is not visited (which in this case s[4] would have been).
+//If that room is not visited, make sent ==ele and carry out the otherPaths(sent) (which is similar to the allPaths() 
+//but it appends the path generated to returnPath).
+//If the returnPath is longer than or equal to potPath, then make revert returnPath.
+//If the returnPath is shorter that potPath, make potPath= returnPath and repeat until all the next rooms have been visited.
+//Once all rooms have been visited, make all rooms not visited, then all the rooms in potPath visited, then finally; roomPath[count]==potPath.
 		for index, ele := range sent.nextRoom {
 			if ele.visited == 0 && (index != len(sent.nextRoom)-1) {
 				sent = ele
 				otherPaths(sent)
 				if len(returnPath) >= len(potPath) {
 					for _, roomele := range roomList {
+						for i:=4; i<len(returnPath)-1;i++{
+							if string(returnPath[i])==roomele.name{
+								roomele.visited=0
+							}
+						}
 						if string(returnPath[4]) == roomele.name {
 							roomele.visited = 1
 						}
+						
 					}
 					returnPath = ""
 					for i := 0; i <= 3; i++ {
@@ -280,8 +295,8 @@ func verifyPath(s string) {
 				}
 			} else if ele.visited == 0 && (index == len(sent.nextRoom)-1) {
 				sent = ele
-				fmt.Print("last index  ")
-				fmt.Println(*sent)
+				// fmt.Print("last index  ")
+				// fmt.Println(*sent)
 				otherPaths(sent)
 				if len(returnPath) < len(potPath) {
 					for _, roomele := range roomList {
@@ -300,8 +315,8 @@ func verifyPath(s string) {
 				} else {
 					for _, roomele := range roomList {
 						roomele.visited = 0
-						fmt.Print("last index but return path is greater that:=")
-						fmt.Println(*roomele)
+						// fmt.Print("last index but return path is greater that:=")
+						// fmt.Println(*roomele)
 					}
 					for i := range potPath {
 						for _, roomele := range roomList {
@@ -313,40 +328,36 @@ func verifyPath(s string) {
 					returnPath = ""
 				}
 			}
-
 		}
-
 	} else {
 		roomPaths[count] = ""
 	}
 }
 
-// find shortest route
-
 // place rooms in grid
-func grid() {
-	var grid [30][30]string
-	for row := 0; row < len(grid); row++ {
-		for column := 0; column < len(grid); column++ {
-			grid[row][column] = " "
-		}
-	}
-	for i := range roomList {
-		for row := 0; row < len(grid); row++ {
-			for column := 0; column < len(grid); column++ {
-				if row == roomList[i].row-1 && column == roomList[i].column-1 {
-					grid[row][column] = "[" + roomList[i].name + "]"
-				}
-			}
-		}
-	}
-	for i := range grid {
-		for _, ele := range grid[i] {
-			fmt.Print(ele)
-		}
-		fmt.Println()
-	}
-}
+// func grid() {
+// 	var grid [30][30]string
+// 	for row := 0; row < len(grid); row++ {
+// 		for column := 0; column < len(grid); column++ {
+// 			grid[row][column] = " "
+// 		}
+// 	}
+// 	for i := range roomList {
+// 		for row := 0; row < len(grid); row++ {
+// 			for column := 0; column < len(grid); column++ {
+// 				if row == roomList[i].row-1 && column == roomList[i].column-1 {
+// 					grid[row][column] = "[" + roomList[i].name + "]"
+// 				}
+// 			}
+// 		}
+// 	}
+// 	for i := range grid {
+// 		for _, ele := range grid[i] {
+// 			fmt.Print(ele)
+// 		}
+// 		fmt.Println()
+// 	}
+// }
 
 func main() {
 	getRooms()
