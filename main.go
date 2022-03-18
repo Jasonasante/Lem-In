@@ -140,7 +140,7 @@ func assignStart() {
 	// for _,ele:=range Start.nextRoom{
 	// 	fmt.Println(*ele)
 	// }
-	roomPaths = make([]string, lenStart)
+	roomPaths = make([]string, lenStart+1)
 }
 
 // function to assign the end room for ants
@@ -184,6 +184,11 @@ func allPaths(r *room) {
 	prevRoom := r
 	nextRoom := r.nextRoom
 	fmt.Println(roomPaths)
+	counter := 0
+
+	// fmt.Println()
+	// fmt.Println("rNameSLice last index:= ",rNamesSlice[len(rNamesSlice)-2])
+
 	if prevRoom.end {
 		roomPaths[count] += prevRoom.name
 		verifyPath(roomPaths[count])
@@ -192,40 +197,45 @@ func allPaths(r *room) {
 		count++
 		allPaths(Start)
 	}
-	for i, rooms := range nextRoom {
-		if count < lenStart {
-			rNamesSlice := strings.Split(roomPaths[count], ",")
-			// fmt.Println("rNames:=", rNamesSlice)
-			if !contains(rNamesSlice, rooms.name) && (rooms.visited == 0) {
-				roomPaths[count] += prevRoom.name + ","
-				prevRoom.visited = 1
-				// rNamesSlice = strings.Split(roomPaths[count], ",")
-				// for c := range nextRoom[i].nextRoom {
-				// 	counter := 0
-				// 	for _, ele := range nextRoom[i].nextRoom[c].nextRoom {
-				// 		for l := range ele.nextRoom {
-				// 			for _, eele := range rNamesSlice {
-				// 				if eele == nextRoom[i].nextRoom[c].nextRoom[l].name {
-				// 					counter++
-				// 				}
-				// 			}
-				// 		}
-				// 		// if contains(rNamesSlice, ele.name) {
-				// 		// 	counter++
-				// 		// }
-				// 	}
+	for _, ele := range nextRoom {
+		if ele.visited == 1 {
+			counter++
+		}
+	}
+	if counter == len(nextRoom) {
+		prevRoom.visited = 1
+		dEndNameSlice := strings.Split(roomPaths[count], ",")
+		for _, room := range roomList {
+			if len(dEndNameSlice) >= 2 {
+				if dEndNameSlice[len(dEndNameSlice)-2] == room.name {
+					for j := range room.nextRoom {
+						if room.nextRoom[j].visited == 0 && room.nextRoom[j].name != prevRoom.name {
+							allPaths(room.nextRoom[j])
+						}
+					}
+				}
+				
+			}
 
-				// 	fmt.Println("nextroom Name", nextRoom[i].name)
-				// 	fmt.Println("next nextRoom name", nextRoom[i].nextRoom[c].name)
-				// 	fmt.Println("counter", counter)
-				// 	if counter == len(nextRoom[i].nextRoom[c].nextRoom) {
-				// 		nextRoom[i].nextRoom[c].visited = 1
-				// 		counter = 0
-				// 		// roomPaths[count]=""
-				// 		// allPaths(Start)
-				// 	}
-				// }
-				allPaths(nextRoom[i])
+		}
+		for i := range nextRoom {
+			if nextRoom[i] == Start {
+				fmt.Println("stop")
+				// roomPaths = append(roomPaths[:count],roomPaths[:count-1]...)
+				roomPaths[count] = ""
+				fmt.Println("why")
+				allPaths(Start)
+			}
+		}
+	} else {
+		for i, rooms := range nextRoom {
+			if count < lenStart {
+				rNamesSlice := strings.Split(roomPaths[count], ",")
+				if !contains(rNamesSlice, rooms.name) && (rooms.visited == 0) {
+					roomPaths[count] += prevRoom.name + ","
+					prevRoom.visited = 1
+					allPaths(nextRoom[i])
+				}
 			}
 		}
 	}
@@ -340,6 +350,7 @@ func verifyPath(s string) {
 								}
 							}
 						}
+
 						roomPaths[count] = returnPath
 						returnPath = ""
 					}
