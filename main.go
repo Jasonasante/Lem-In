@@ -40,7 +40,6 @@ func getRooms() {
 			emptyString = ""
 		}
 	}
-	// fmt.Print(linkRmv)
 	var a []string
 	var rooms *room
 	var rowInt int
@@ -101,7 +100,6 @@ func linkRooms() {
 			}
 		}
 	}
-	// fmt.Println("links:= ", links)
 }
 
 // function to assign the start room for ants.
@@ -109,7 +107,6 @@ var (
 	Start    *room
 	lenStart int
 )
-
 func assignStart() {
 	data, _ := os.Open("example.txt")
 	var getStart []string
@@ -136,16 +133,11 @@ func assignStart() {
 		}
 	}
 	lenStart = len(Start.nextRoom)
-	// fmt.Println(lenStart)
-	// for _,ele:=range Start.nextRoom{
-	// 	fmt.Println(*ele)
-	// }
 	roomPaths = make([]string, lenStart+1)
 }
 
 // function to assign the end room for ants
 var End *room
-
 func assignEnd() {
 	data, _ := os.Open("example.txt")
 	var getEnd []string
@@ -175,23 +167,19 @@ func assignEnd() {
 var (
 	count      int
 	roomPaths  []string
-	potPath    string
-	returnPath string
-	visitedNR  int
+	// potPath    string
+	// returnPath string
+	// visitedNR  int
 )
 
 func allPaths(r *room) {
 	prevRoom := r
 	nextRoom := r.nextRoom
-	fmt.Println(roomPaths)
-	counter := 0
-
-	// fmt.Println()
-	// fmt.Println("rNameSLice last index:= ",rNamesSlice[len(rNamesSlice)-2])
-
+	visitedCounter := 0
+	lenCounter := 0
 	if prevRoom.end {
 		roomPaths[count] += prevRoom.name
-		verifyPath(roomPaths[count])
+		// verifyPath(roomPaths[count])
 		Start.visited = 0
 		End.visited = 0
 		count++
@@ -199,42 +187,54 @@ func allPaths(r *room) {
 	}
 	for _, ele := range nextRoom {
 		if ele.visited == 1 {
-			counter++
+			visitedCounter++
 		}
 	}
-	if counter == len(nextRoom) {
+
+	if visitedCounter == len(nextRoom) {
 		prevRoom.visited = 1
 		dEndNameSlice := strings.Split(roomPaths[count], ",")
 		for _, room := range roomList {
 			if len(dEndNameSlice) >= 2 {
 				if dEndNameSlice[len(dEndNameSlice)-2] == room.name {
-					for j := range room.nextRoom {
-						if room.nextRoom[j].visited == 0 && room.nextRoom[j].name != prevRoom.name {
-							allPaths(room.nextRoom[j])
-						}
-					}
+					dEndNameSlice = remove(dEndNameSlice, len(dEndNameSlice)-2)
+					//fmt.Println("dEnd", dEndNameSlice)
+					roomPaths[count] = strings.Join(dEndNameSlice, ",")
+					allPaths(room)
 				}
-				
-			}
-
-		}
-		for i := range nextRoom {
-			if nextRoom[i] == Start {
-				fmt.Println("stop")
-				// roomPaths = append(roomPaths[:count],roomPaths[:count-1]...)
-				roomPaths[count] = ""
-				fmt.Println("why")
-				allPaths(Start)
 			}
 		}
 	} else {
-		for i, rooms := range nextRoom {
-			if count < lenStart {
-				rNamesSlice := strings.Split(roomPaths[count], ",")
-				if !contains(rNamesSlice, rooms.name) && (rooms.visited == 0) {
+		for _, roomele := range nextRoom {
+			lenCounter++
+			if prevRoom == Start {
+				for i, rooms := range nextRoom {
+					if count < lenStart {
+						rNamesSlice := strings.Split(roomPaths[count], ",")
+						if !contains(rNamesSlice, rooms.name) && (rooms.visited == 0) {
+							roomPaths[count] += prevRoom.name + ","
+							prevRoom.visited = 1
+							allPaths(nextRoom[i])
+						}
+					}
+				}
+			}
+			if roomele.end {
+				if count < lenStart {
 					roomPaths[count] += prevRoom.name + ","
 					prevRoom.visited = 1
-					allPaths(nextRoom[i])
+					allPaths(roomele)
+				}
+			} else if lenCounter == len(nextRoom) {
+				for i, rooms := range nextRoom {
+					if count < lenStart {
+						rNamesSlice := strings.Split(roomPaths[count], ",")
+						if !contains(rNamesSlice, rooms.name) && (rooms.visited == 0) {
+							roomPaths[count] += prevRoom.name + ","
+							prevRoom.visited = 1
+							allPaths(nextRoom[i])
+						}
+					}
 				}
 			}
 		}
@@ -251,116 +251,145 @@ func contains(s []string, e string) bool {
 	return false
 }
 
+func remove(slice []string, s int) []string {
+	return append(slice[:s], slice[s+1:]...)
+}
+
 // checks for other paths
-func otherPaths(r *room) {
-	prevRoom := r
-	nextRoom := r.nextRoom
-	if prevRoom.end {
-		returnPath += prevRoom.name
-	}
-	for _, ele := range nextRoom {
-		if ele.visited == 1 {
-			visitedNR++
-		}
-	}
+// func otherPaths(r *room) {
+// 	prevRoom := r
+// 	nextRoom := r.nextRoom
+// 	checkCounter := 0
+// 	if prevRoom.end {
+// 		returnPath += prevRoom.name
+// 	}
+// 	for _, ele := range nextRoom {
+// 		if ele.visited == 1 {
+// 			visitedNR++
+// 		}
+// 	}
 
-	if visitedNR == len(nextRoom) {
-		returnPath = potPath
-		visitedNR = 0
-	} else {
-		for i, rooms := range nextRoom {
-			returnPathSlice := strings.Split(returnPath, ",")
-			if !contains(returnPathSlice, rooms.name) && (rooms.visited == 0) {
-				returnPath += prevRoom.name + ","
-				prevRoom.visited = 1
-				otherPaths(nextRoom[i])
-			}
-		}
-	}
-}
+// 	if visitedNR == len(nextRoom) {
+// 		returnPath = potPath
+// 		visitedNR = 0
+// 	} else {
+// 		for _, roomele := range nextRoom {
+// 			checkCounter++
+// 			if roomele.end && prevRoom.visited==0{
+// 				returnPath += prevRoom.name + ","
+// 				prevRoom.visited = 1
+// 				otherPaths(roomele)
+// 			} else if checkCounter == len(nextRoom) {
+// 				for i, rooms := range nextRoom {
+// 					returnPathSlice := strings.Split(returnPath, ",")
+// 					if !contains(returnPathSlice, rooms.name) && (rooms.visited == 0) {
+// 						returnPath += prevRoom.name + ","
+// 						prevRoom.visited = 1
+// 						otherPaths(nextRoom[i])
+// 					}
+// 				}
+// 			}
+// 		}
+// 		// for i, rooms := range nextRoom {
+// 		// 	returnPathSlice := strings.Split(returnPath, ",")
+// 		// 	if !contains(returnPathSlice, rooms.name) && (rooms.visited == 0) {
+// 		// 		returnPath += prevRoom.name + ","
+// 		// 		prevRoom.visited = 1
+// 		// 		otherPaths(nextRoom[i])
+// 		// 	}
+// 		// }
+// 	}
+// }
 
-// verifies if the path we collect is the shortest option
-func verifyPath(s string) {
-	potPath = s
-	potPlathSlice := strings.Split(potPath, ",")
-	fmt.Println(potPlathSlice)
-	var sent *room
-	// so with example1 returnPath may be "1,3," or "1,2,"
-	var next *room
-	for i := 0; i < 2; i++ {
-		returnPath += potPlathSlice[i] + ","
-	}
-	// fmt.Println("potPlathSlice check", potPlathSlice)
-	// fmt.Println("returnPath--", returnPath)
-	// If the incoming string/path starts with the the start room and ends with an end room,
-	// then check if it is the shortest part available. Else make that roomPath[Count]=="".
-	if (potPlathSlice[0] == Start.name) && (potPlathSlice[(len(potPlathSlice)-1)] == End.name) {
-		// the room at s[4] is the nextroom of start's nextroom. So we make that room visited
-		// and make the sent variable s[2].
-		if len(potPlathSlice) != 2 {
-			for _, roomele := range roomList {
-				for i := 2; i < len(potPlathSlice)-1; i++ {
-					if potPlathSlice[i] == roomele.name {
-						roomele.visited = 0
-					}
-				}
-				if potPlathSlice[2] == roomele.name {
-					roomele.visited = 1
-				}
-				if potPlathSlice[1] == roomele.name {
-					sent = roomele
-				}
-			}
-			// Going through sent's nextroom, check if that room is not visited (which in this case s[4] would have been).
-			// If that room is not visited, make sent ==ele and carry out the otherPaths(sent) (which is similar to the allPaths()
-			// but it appends the path generated to returnPath).
-			// If the returnPath is longer than or equal to potPath, then make revert returnPath.
-			// If the returnPath is shorter that potPath, make potPath= returnPath and repeat until all the next rooms have been visited.
-			// Once all rooms have been visited, make all rooms not visited, then all the rooms in potPath visited, then finally; roomPath[count]==potPath.
-			for _, ele := range sent.nextRoom {
-				if ele.visited == 0 {
-					next = ele
-					otherPaths(next)
-					if len(returnPath) > len(potPath) {
-						returnPathSlice := strings.Split(returnPath, ",")
-						for _, roomele := range roomList {
-							for i := 3; i < len(returnPathSlice)-1; i++ {
-								if returnPathSlice[i] == roomele.name {
-									roomele.visited = 0
-								}
-							}
-							if returnPathSlice[3] == roomele.name {
-								roomele.visited = 1
-							}
-						}
-						returnPath = ""
-						for i := 0; i < 2; i++ {
-							returnPath += returnPathSlice[i] + ","
-						}
-					} else {
-						returnPathSlice := strings.Split(returnPath, ",")
-						fmt.Println("less than returnPath", returnPathSlice)
-						for _, roomele := range roomList {
-							roomele.visited = 0
-						}
-						for i := range returnPathSlice {
-							for _, roomele := range roomList {
-								if returnPathSlice[i] == roomele.name {
-									roomele.visited = 1
-								}
-							}
-						}
+// // verifies if the path we collect is the shortest option
+// func verifyPath(s string) {
+// 	potPath = s
+// 	fmt.Println("first",potPath)
+// 	potPlathSlice := strings.Split(potPath, ",")
+// 	fmt.Println("potPath", potPlathSlice)
+// 	var sent *room
+// 	// so with example1 returnPath may be "1,3," or "1,2,"
+// 	var next *room
+// 	for i := 0; i < 2; i++ {
+// 		returnPath += potPlathSlice[i] + ","
+// 	}
+// 	// fmt.Println("potPlathSlice check", potPlathSlice)
+// 	// fmt.Println("returnPath--", returnPath)
+// 	// If the incoming string/path starts with the the start room and ends with an end room,
+// 	// then check if it is the shortest part available. Else make that roomPath[Count]=="".
+// 	if (potPlathSlice[0] == Start.name) && (potPlathSlice[(len(potPlathSlice)-1)] == End.name) {
+// 		// the room at s[4] is the nextroom of start's nextroom. So we make that room visited
+// 		// and make the sent variable s[2].
+// 		if len(potPlathSlice) > 3 {
+// 			for _, roomele := range roomList {
+// 				for i := 3; i < len(potPlathSlice)-1; i++ {
+// 				if potPlathSlice[i] == roomele.name {
+// 						roomele.visited = 0
+// 				}
+// 				}
+// 				if potPlathSlice[2] == roomele.name {
+// 					roomele.visited = 1
+// 				}
+// 				if potPlathSlice[1] == roomele.name {
+// 					sent = roomele
+// 				}
+// 			}
+// 			// Going through sent's nextroom, check if that room is not visited (which in this case s[4] would have been).
+// 			// If that room is not visited, make sent ==ele and carry out the otherPaths(sent) (which is similar to the allPaths()
+// 			// but it appends the path generated to returnPath).
+// 			// If the returnPath is longer than or equal to potPath, then make revert returnPath.
+// 			// If the returnPath is shorter that potPath, make potPath= returnPath and repeat until all the next rooms have been visited.
+// 			// Once all rooms have been visited, make all rooms not visited, then all the rooms in potPath visited, then finally; roomPath[count]==potPath.
+// 			for _, ele := range sent.nextRoom {
+// 				if ele.visited == 0 {
+// 					next = ele
+// 					otherPaths(next)
+// 					if len(returnPath) > len(potPath) {
+// 						returnPathSlice := strings.Split(returnPath, ",")
+// 						for _, roomele := range roomList {
+// 							fmt.Println(roomele.name)
+// 							fmt.Println(roomele.visited)
+// 							for i := 3; i < len(returnPathSlice)-1; i++ {
+// 								if returnPathSlice[i] == roomele.name {
+// 									roomele.visited = 0
+// 								}
+// 								if returnPathSlice[3] == roomele.name {
+// 									roomele.visited = 1
+// 								}
+// 							}
 
-						roomPaths[count] = returnPath
-						returnPath = ""
-					}
-				}
-			}
-		}
-	} else {
-		roomPaths[count] = ""
-	}
-}
+// 						}
+
+// 						returnPath = ""
+// 						for i := 0; i < 2; i++ {
+// 							returnPath += returnPathSlice[i] + ","
+// 						}
+// 					} else {
+// 						returnPathSlice := strings.Split(returnPath, ",")
+// 						fmt.Println("less than returnPath", returnPathSlice)
+// 						for _, roomele := range roomList {
+// 							roomele.visited = 0
+// 						}
+// 						for i := range returnPathSlice {
+// 							for _, roomele := range roomList {
+// 								if returnPathSlice[i] == roomele.name {
+// 									roomele.visited = 1
+// 									fmt.Print("visited name:=", roomele.name)
+// 									fmt.Println("  visited check:= ", roomele.visited)
+// 								}
+// 							}
+// 						}
+// fmt.Println("hi")
+// 						roomPaths[count] = returnPath
+// 						returnPath = ""
+// 					}
+// 				}
+// 			}
+// 		}
+// 	} else {
+// 		roomPaths[count] = ""
+// 	}
+// }
 
 // place rooms in grid
 // func grid() {
