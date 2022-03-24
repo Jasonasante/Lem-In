@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -18,6 +19,29 @@ type room struct {
 	visited  int
 }
 
+type Ant struct {
+	name string
+	path string
+}
+
+func getAnts() {
+	data, _ := os.Open("example.txt")
+	getants := bufio.NewScanner(data)
+	line := 0
+
+	for getants.Scan() {
+		line++
+		if line == 1 {
+			a, err := strconv.Atoi(getants.Text())
+			if err != nil {
+				fmt.Println("ERROR: invalid data format")
+				log.Fatal()
+			}
+			fmt.Println(a)
+		}
+	}
+}
+
 var roomList []*room
 
 // to initialise rooms with their own address
@@ -26,9 +50,12 @@ func getRooms() {
 	// fmt.Println(data)
 	var emptyString string
 	var getCoOrd string
+	line:=0
 	// this is to get coords by removing # and -
 	getCoOrds := bufio.NewScanner(data)
 	for getCoOrds.Scan() {
+		line++
+		if line>1{
 		// fmt.Println(scanner.Text())
 		if strings.Contains(getCoOrds.Text(), "#") {
 			emptyString = ""
@@ -39,6 +66,7 @@ func getRooms() {
 			getCoOrd += emptyString
 			emptyString = ""
 		}
+	}
 	}
 	var a []string
 	var rooms *room
@@ -69,9 +97,12 @@ func linkRooms() {
 	// fmt.Println(data)
 	var emptyString string
 	var links []string
+	line:=0
 	// this is to get coords by removing # and -
 	linksInfo := bufio.NewScanner(data)
 	for linksInfo.Scan() {
+		line++
+		if line>1{
 		if strings.Contains(linksInfo.Text(), "#") {
 			emptyString = ""
 		} else if strings.Contains(linksInfo.Text(), " ") {
@@ -81,6 +112,7 @@ func linkRooms() {
 			links = append(links, emptyString)
 			emptyString = ""
 		}
+	}
 	}
 
 	for i := range links {
@@ -112,6 +144,7 @@ func assignStart() {
 	data, _ := os.Open("example.txt")
 	var getStart []string
 	var startLine string
+
 	startInfo := bufio.NewScanner(data)
 	for startInfo.Scan() {
 		getStart = append(getStart, startInfo.Text())
@@ -134,8 +167,9 @@ func assignStart() {
 		}
 	}
 	lenStart = len(Start.nextRoom)
-	roomPaths = make([]string, lenStart+1)
+	roomPaths = make([]string, 5)
 }
+
 
 // function to assign the end room for ants
 var End *room
@@ -144,10 +178,12 @@ func assignEnd() {
 	data, _ := os.Open("example.txt")
 	var getEnd []string
 	var endLine string
+
 	// this is to get coords by removing # and -
 	endInfo := bufio.NewScanner(data)
 	for endInfo.Scan() {
 		getEnd = append(getEnd, endInfo.Text())
+		
 	}
 
 	for i := range getEnd {
@@ -273,7 +309,7 @@ func remove(slice []string, s int) []string {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-//removes an invalid path
+// removes an invalid path
 func startEnd(s string) string {
 	a := strings.Split(s, ",")
 	if a[0] == Start.name && a[len(a)-1] == End.name {
@@ -283,8 +319,9 @@ func startEnd(s string) string {
 	return s
 }
 
-//removes empty paths from path's array
+// removes empty paths from path's array
 var finalPath []string
+
 func Final() {
 	for i := range roomPaths {
 		if roomPaths[i] != "" {
@@ -319,6 +356,7 @@ func Final() {
 // }
 
 func main() {
+	getAnts()
 	getRooms()
 	linkRooms()
 	assignStart()
