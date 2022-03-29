@@ -20,9 +20,11 @@ type room struct {
 }
 
 type Ant struct {
-	name string
-	path string
+	name int
+	room *room
 }
+
+var ants []*Ant
 
 func getAnts() {
 	data, _ := os.Open("example.txt")
@@ -37,7 +39,11 @@ func getAnts() {
 				fmt.Println("ERROR: invalid data format")
 				log.Fatal()
 			}
-			fmt.Println(a)
+			ants = make([]*Ant, a)
+			for i := 0; i < a; i++ {
+				antName := &Ant{name: i + 1}
+				ants[i] = antName
+			}
 		}
 	}
 }
@@ -50,23 +56,23 @@ func getRooms() {
 	// fmt.Println(data)
 	var emptyString string
 	var getCoOrd string
-	line:=0
+	line := 0
 	// this is to get coords by removing # and -
 	getCoOrds := bufio.NewScanner(data)
 	for getCoOrds.Scan() {
 		line++
-		if line>1{
-		// fmt.Println(scanner.Text())
-		if strings.Contains(getCoOrds.Text(), "#") {
-			emptyString = ""
-		} else if strings.Contains(getCoOrds.Text(), "-") {
-			emptyString = ""
-		} else {
-			emptyString = getCoOrds.Text() + "\n"
-			getCoOrd += emptyString
-			emptyString = ""
+		if line > 1 {
+			// fmt.Println(scanner.Text())
+			if strings.Contains(getCoOrds.Text(), "#") {
+				emptyString = ""
+			} else if strings.Contains(getCoOrds.Text(), "-") {
+				emptyString = ""
+			} else {
+				emptyString = getCoOrds.Text() + "\n"
+				getCoOrd += emptyString
+				emptyString = ""
+			}
 		}
-	}
 	}
 	var a []string
 	var rooms *room
@@ -97,22 +103,22 @@ func linkRooms() {
 	// fmt.Println(data)
 	var emptyString string
 	var links []string
-	line:=0
+	line := 0
 	// this is to get coords by removing # and -
 	linksInfo := bufio.NewScanner(data)
 	for linksInfo.Scan() {
 		line++
-		if line>1{
-		if strings.Contains(linksInfo.Text(), "#") {
-			emptyString = ""
-		} else if strings.Contains(linksInfo.Text(), " ") {
-			emptyString = ""
-		} else {
-			emptyString = linksInfo.Text()
-			links = append(links, emptyString)
-			emptyString = ""
+		if line > 1 {
+			if strings.Contains(linksInfo.Text(), "#") {
+				emptyString = ""
+			} else if strings.Contains(linksInfo.Text(), " ") {
+				emptyString = ""
+			} else {
+				emptyString = linksInfo.Text()
+				links = append(links, emptyString)
+				emptyString = ""
+			}
 		}
-	}
 	}
 
 	for i := range links {
@@ -170,7 +176,6 @@ func assignStart() {
 	roomPaths = make([]string, 5)
 }
 
-
 // function to assign the end room for ants
 var End *room
 
@@ -183,7 +188,7 @@ func assignEnd() {
 	endInfo := bufio.NewScanner(data)
 	for endInfo.Scan() {
 		getEnd = append(getEnd, endInfo.Text())
-		
+
 	}
 
 	for i := range getEnd {
@@ -328,6 +333,65 @@ func Final() {
 			finalPath = append(finalPath, roomPaths[i])
 		}
 	}
+
+	for k := range roomList {
+		if roomList[k].nextRoom != nil {
+			roomList[k].visited = 0
+			roomList[k].nextRoom = nil
+		}
+	}
+
+	for i := range roomPaths {
+		b := strings.Split(roomPaths[i], ",")
+		for o := 0; o < len(b)-1; o++ {
+			for k := range roomList {
+				for l := range roomList {
+					if b[o] == roomList[k].name && b[o+1] == roomList[l].name {
+						roomList[k].nextRoom = append(roomList[k].nextRoom, roomList[l])
+					}
+				}
+			}
+		}
+	}
+}
+
+func Sort() {
+	for i := 0; i < len(finalPath)-1; i++ {
+		if len(finalPath[i]) > len(finalPath[i+1]) {
+			g := finalPath[i]
+			h := finalPath[i+1]
+			finalPath[i] = h
+			finalPath[i+1] = g
+		} else if len(finalPath[i+1]) < len(finalPath[i]) {
+			g := finalPath[i+1]
+			h := finalPath[i]
+			finalPath[i] = h
+			finalPath[i+1] = g
+		}
+	}
+	fmt.Println(finalPath)
+}
+
+func TraversePath(r *room) {
+
+
+	// var antPath []string
+
+	// for i := range finalPath {
+	// 	a := strings.Split(finalPath[i], ",")
+	// 	for q := range a{
+	// 	for k := range ants {
+	// 		for o := range roomList {
+	// 			if roomList[o].name == a[q] && roomList[o].visited == 0 {
+	// 					ants[k].room = roomList [o]
+	// 					roomList[o].visited = 1
+	// 					antPath = append(antPath, string("L"+(strconv.Itoa(ants[i].name))+"-"+ants[i].room.name))
+	// 					fmt.Println(antPath)
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 // place rooms in grid
@@ -363,5 +427,7 @@ func main() {
 	assignEnd()
 	allPaths(Start)
 	Final()
+	Sort()
+	TraversePath(Start)
 	fmt.Println(finalPath)
 }
