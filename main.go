@@ -75,7 +75,6 @@ func getRooms() {
 	var emptyString string
 	var getCoOrd string
 	line := 0
-	// this is to get coords by removing # and -
 	getCoOrds := bufio.NewScanner(data)
 	for getCoOrds.Scan() {
 		line++
@@ -125,7 +124,6 @@ func linkRooms() {
 	var emptyString string
 	var links []string
 	line := 0
-	// this is to get coords by removing # and -
 	linksInfo := bufio.NewScanner(data)
 	for linksInfo.Scan() {
 		line++
@@ -143,7 +141,6 @@ func linkRooms() {
 		for j := range links[i] {
 			if links[i][j] == '-' {
 				linkString := strings.Split(links[i], "-")
-				// fmt.Println(linkString)
 				for k := range roomList {
 					for o := range roomList {
 						if linkString[0] == roomList[k].name && roomList[o].name == linkString[1] {
