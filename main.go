@@ -497,31 +497,6 @@ func TraversePath(r *room) {
 	antPath = antPath[:len(antPath)-1]
 }
 
-// place rooms in grid
-// func grid() {
-// 	var grid [30][30]string
-// 	for row := 0; row < len(grid); row++ {
-// 		for column := 0; column < len(grid); column++ {
-// 			grid[row][column] = " "
-// 		}
-// 	}
-// 	for i := range roomList {
-// 		for row := 0; row < len(grid); row++ {
-// 			for column := 0; column < len(grid); column++ {
-// 				if row == roomList[i].row-1 && column == roomList[i].column-1 {
-// 					grid[row][column] = "[" + roomList[i].name + "]"
-// 				}
-// 			}
-// 		}
-// 	}
-// 	for i := range grid {
-// 		for _, ele := range grid[i] {
-// 			fmt.Print(ele)
-// 		}
-// 		fmt.Println()
-// 	}
-// }
-
 func main() {
 	getAnts()
 	getRooms()
