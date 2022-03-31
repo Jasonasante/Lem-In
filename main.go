@@ -17,31 +17,44 @@ type room struct {
 	start    bool
 	end      bool
 	visited  int
+	noOfAnts int
 }
 
 type Ant struct {
-	name int
-	room *room
+	name     string
+	room     *room
+	prevRoom *room
+	path     string
 }
 
 var ants []*Ant
 
 func getAnts() {
-	data, _ := os.Open("example.txt")
+	data, err1 := os.Open(os.Args[1])
+	if err1 != nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("File Error")
+		log.Fatal()
+	}
 	getants := bufio.NewScanner(data)
 	line := 0
 
 	for getants.Scan() {
+		if getants.Text() == "" {
+			fmt.Println("ERROR: invalid data format")
+			log.Fatal()
+		}
 		line++
 		if line == 1 {
-			a, err := strconv.Atoi(getants.Text())
-			if err != nil {
+			a, err2 := strconv.Atoi(getants.Text())
+			if err2 != nil {
 				fmt.Println("ERROR: invalid data format")
+				fmt.Println("No ants found")
 				log.Fatal()
 			}
 			ants = make([]*Ant, a)
 			for i := 0; i < a; i++ {
-				antName := &Ant{name: i + 1}
+				antName := &Ant{name: strconv.Itoa(i + 1)}
 				ants[i] = antName
 			}
 		}
@@ -52,8 +65,13 @@ var roomList []*room
 
 // to initialise rooms with their own address
 func getRooms() {
-	data, _ := os.Open("example.txt")
-	// fmt.Println(data)
+	data, err1 := os.Open(os.Args[1])
+	if err1 != nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("File Error")
+		log.Fatal()
+	}
+
 	var emptyString string
 	var getCoOrd string
 	line := 0
@@ -62,7 +80,6 @@ func getRooms() {
 	for getCoOrds.Scan() {
 		line++
 		if line > 1 {
-			// fmt.Println(scanner.Text())
 			if strings.Contains(getCoOrds.Text(), "#") {
 				emptyString = ""
 			} else if strings.Contains(getCoOrds.Text(), "-") {
@@ -99,8 +116,12 @@ func getRooms() {
 
 // this links the room to their respective next room(s)
 func linkRooms() {
-	data, _ := os.Open("example.txt")
-	// fmt.Println(data)
+	data, err1 := os.Open(os.Args[1])
+	if err1 != nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("File Error")
+		log.Fatal()
+	}
 	var emptyString string
 	var links []string
 	line := 0
@@ -109,13 +130,10 @@ func linkRooms() {
 	for linksInfo.Scan() {
 		line++
 		if line > 1 {
-			if strings.Contains(linksInfo.Text(), "#") {
-				emptyString = ""
-			} else if strings.Contains(linksInfo.Text(), " ") {
-				emptyString = ""
-			} else {
+			if strings.Contains(linksInfo.Text(), "-") {
 				emptyString = linksInfo.Text()
 				links = append(links, emptyString)
+			} else {
 				emptyString = ""
 			}
 		}
@@ -147,7 +165,12 @@ var (
 )
 
 func assignStart() {
-	data, _ := os.Open("example.txt")
+	data, err1 := os.Open(os.Args[1])
+	if err1 != nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("File Error")
+		log.Fatal()
+	}
 	var getStart []string
 	var startLine string
 
@@ -172,7 +195,17 @@ func assignStart() {
 			Start = roomList[i]
 		}
 	}
+	if Start == nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("No Start Room Found")
+		log.Fatal()
+	}
 	lenStart = len(Start.nextRoom)
+	if lenStart == 0 {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("No rooms connecting to Start")
+		log.Fatal()
+	}
 	roomPaths = make([]string, 5)
 }
 
@@ -180,7 +213,12 @@ func assignStart() {
 var End *room
 
 func assignEnd() {
-	data, _ := os.Open("example.txt")
+	data, err1 := os.Open(os.Args[1])
+	if err1 != nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("File Error")
+		log.Fatal()
+	}
 	var getEnd []string
 	var endLine string
 
@@ -188,7 +226,6 @@ func assignEnd() {
 	endInfo := bufio.NewScanner(data)
 	for endInfo.Scan() {
 		getEnd = append(getEnd, endInfo.Text())
-
 	}
 
 	for i := range getEnd {
@@ -203,6 +240,17 @@ func assignEnd() {
 			End = ele
 		}
 	}
+	if End == nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("No End Room assigned")
+		log.Fatal()
+	}
+	if End.nextRoom == nil {
+		fmt.Println("ERROR: invalid data format")
+		fmt.Println("No rooms connecting to end")
+		log.Fatal()
+	}
+	End.noOfAnts = len(ants)
 }
 
 // find path from start to end
@@ -355,6 +403,7 @@ func Final() {
 	}
 }
 
+// this sorts the elements of roomPaths in ascending order
 func Sort() {
 	for i := 0; i < len(finalPath)-1; i++ {
 		if len(finalPath[i]) > len(finalPath[i+1]) {
@@ -369,29 +418,83 @@ func Sort() {
 			finalPath[i+1] = g
 		}
 	}
-	fmt.Println(finalPath)
 }
 
+// this returns the index of the smallest path
+var roomLength []int
+
+func minPath(roomLength []int) int {
+	min := roomLength[0]
+	index := 0
+	for i, room := range roomLength {
+		if room < min {
+			min = room
+			index = i
+		}
+	}
+	return index
+}
+
+// this assigns the appropriate path to each ant with the smallest number of turns
+func assignPaths() {
+	for i := range finalPath {
+		a := strings.Split(finalPath[i], ",")
+		roomLength = append(roomLength, (len(a) - 2))
+	}
+	for n := range ants {
+		ants[n].path = finalPath[minPath(roomLength)]
+		roomLength[minPath(roomLength)]++
+		a := strings.Split(ants[n].path, ",")
+		for _, ele := range Start.nextRoom {
+			if ele.name == a[1] {
+				ants[n].room = ele
+			}
+		}
+	}
+}
+
+var antPath string
+
 func TraversePath(r *room) {
+	endAnts := 0
+	for endAnts != End.noOfAnts {
+		for i := range ants {
+			if i < len(ants)-1 {
+				if ants[i].room.visited == 0 && !ants[i].room.end {
+					ants[i].room.visited = 1
+					antPath += string("L"+ants[i].name+"-"+ants[i].room.name) + " "
+					ants[i].prevRoom = ants[i].room
+					ants[i].room = ants[i].room.nextRoom[0]
+				} else if ants[i].room.visited == 0 && ants[i].room.end {
+					if !strings.Contains(antPath, string("L"+ants[i].name)+"-"+ants[i].room.name) {
+						antPath += "L" + ants[i].name + "-" + ants[i].room.name + " "
+						ants[i].prevRoom = ants[i].room
+						endAnts++
+					}
+				}
+			} else if i == len(ants)-1 {
+				if ants[i].room.end {
+					antPath += string("L"+ants[i].name+"-"+ants[i].room.name) + " "
+					endAnts++
+				}
+				if ants[i].room.visited == 0 && !ants[i].room.end {
+					ants[i].room.visited = 1
+					antPath += "L" + ants[i].name + "-" + ants[i].room.name + " "
+					ants[i].prevRoom = ants[i].room
+					ants[i].room = ants[i].room.nextRoom[0]
+				}
+				for j := range ants {
+					if ants[j].prevRoom != nil {
+						ants[j].prevRoom.visited = 0
+					}
+				}
+			}
+		}
 
+		antPath += "\n"
+	}
 
-	// var antPath []string
-
-	// for i := range finalPath {
-	// 	a := strings.Split(finalPath[i], ",")
-	// 	for q := range a{
-	// 	for k := range ants {
-	// 		for o := range roomList {
-	// 			if roomList[o].name == a[q] && roomList[o].visited == 0 {
-	// 					ants[k].room = roomList [o]
-	// 					roomList[o].visited = 1
-	// 					antPath = append(antPath, string("L"+(strconv.Itoa(ants[i].name))+"-"+ants[i].room.name))
-	// 					fmt.Println(antPath)
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+	antPath = antPath[:len(antPath)-1]
 }
 
 // place rooms in grid
@@ -428,6 +531,9 @@ func main() {
 	allPaths(Start)
 	Final()
 	Sort()
+	assignPaths()
 	TraversePath(Start)
-	fmt.Println(finalPath)
+	file, _ := os.ReadFile(os.Args[1])
+	fmt.Println(string(file) + "\n")
+	fmt.Println(antPath)
 }
