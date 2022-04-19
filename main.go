@@ -47,6 +47,11 @@ func getAnts() {
 		line++
 		if line == 1 {
 			a, err2 := strconv.Atoi(getants.Text())
+			if a == 0 {
+				fmt.Println("ERROR: invalid data format")
+				fmt.Println("No ants found")
+				log.Fatal()
+			}
 			if err2 != nil {
 				fmt.Println("ERROR: invalid data format")
 				fmt.Println("No ants found")
