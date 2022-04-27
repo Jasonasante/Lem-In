@@ -29,6 +29,7 @@ type Ant struct {
 
 var ants []*Ant
 
+//This is to obtain and create an address for n number of ants.
 func getAnts() {
 	data, err1 := os.Open(os.Args[1])
 	if err1 != nil {
